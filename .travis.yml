@@ -1,0 +1,22 @@
+language: python
+python:
+  - "3.6"
+install: skip
+jobs:
+  include:
+    - stage: unittest
+      name: "Unit tests"
+      before_script:
+        - pip install -r requirements-dev.txt
+        - pip install coveralls
+      script: bolt cov
+      after_success: coveralls
+deploy:
+  provider: pypi
+  user: "__token__"
+  password:
+    secure: mS1YDoyTKFxsLYXcukCzwAv+PkXVq9uK168fna57qnMX985pR4DAxPfnoxQIVxOYCghwYXC3ZiExxXvAb//uPwd4NcoSp6NOfB47+GL7ITvpZVy2KtYg2coE8okelGsxsiJZYvTGZYfy/5tmzaRylORBUve52gIiYdsSFfQbVluJW1s2BS61ePOkGcJkU1GRbMhY5aAYpTZke81M2UuQdj9iretP700Aqk9GGR5ORBlaNdbmewyC0iKzVTF8sa2BQ7GM0rwBhvZ0AtCCusWJmx8m1bj5t0LY0o38xJnyWGVypLcILQbHJisB1cz95dvqw5/Obmmc+FuM0saywq2Iu837f4BKj+xl0zYE6CeV2rJ9ZHs1fnW7+0wFf7pNkkODFWi/XOl1eTkm34tHkrkCsw1ydz6LvIdYAplY+QBl9u+qxeD7f3vNlOUnurPReC473aXn1IkhZvOScmqw+sLxiKs6Ea+RD0S5cNc+IWmtAVMBtVcL+s0B4PHydj1N7qIixM0+s6cZD7tbIm3tptEjP3WCAwwPZUjRkEHVXWW5zrRiBstPdwv3Axc5yq0JD29zKY470wsDU7nUA3o+TSs7j8Dme4m3+G4caCLOiGe7p49PU6PLIse+tpnZnws9Did7OaxG/Oi+1bqD/wEskXYJQ2mVcougY97azYQ3T6PT1oU=
+  on:
+    branch: master
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
