@@ -12,11 +12,11 @@ Install with pip or your favorite package manager: `pip install py-emails`
 
 
 Emails can be created declaratively:
-```
+```python
 from emails import Email
 
 smtp_config = {
-    'sender': 'barry@example.com',
+    'sender': 'you@example.com',
     'host': 'smtp.example.com'
 }
 
@@ -30,18 +30,18 @@ other_attachment = {
 }
 my_email = Email( 
     smtp_config, 
-    subject='How are you?'
+    subject='How are you?',
     body='Long time no see, we should get together!',
     attachments=[first_attachment, other_attachment]
 )
 ```
 
 Or using a template dictionary:
-```
+```python
 from emails import from_template
 
 smtp_config = {
-    'sender': 'barry@example.com',
+    'sender': 'you@example.com',
     'host': 'smtp.example.com',
     'port': 587,
     'password': '<secret password>'
@@ -56,7 +56,14 @@ my_email = from_template(template)
 
 
 Once you have the email object, sending it is as simple as specifying one or more recipients:
-```
+```python
+import emails
+
+smtp_config = {
+    'sender': 'you@example.com',
+    'host': 'smtp.example.com'
+}
+my_email = emails.Email(smtp_config)
 my_email.send('person1@example.com')
 my_email.send(['person2@example.com', 'person3@example.com'])
 ```
