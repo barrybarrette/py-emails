@@ -67,3 +67,5 @@ my_email = emails.Email(smtp_config)
 my_email.send('person1@example.com')
 my_email.send(['person2@example.com', 'person3@example.com'])
 ```
+
+See `examples.py` for more in depth use cases
