@@ -5,12 +5,13 @@ import smtplib
 
 class Email:
 
-    def __init__(self, smtp_config, subject=None, body=None, attachments=None):
+    def __init__(self, smtp_config, subject=None, body=None, body_type=None, attachments=None):
         self.smtp_config = smtp_config
         self._raise_if_undefined('sender')
         self._raise_if_undefined('host')
         self.subject = subject
         self.body = body
+        self.body_type = body_type
         self.attachments = attachments or []
 
 
@@ -36,7 +37,9 @@ class Email:
         if isinstance(recipients, str): message['To'] = recipients
         else: message['To'] = ', '.join(recipients)
         if self.subject: message['Subject'] = self.subject
-        if self.body: message.set_content(self.body)
+        if self.body:
+            if self.body_type: message.set_content(self.body, subtype=self.body_type)
+            else: message.set_content(self.body)
         self._add_attachments(message)
         return message
 
@@ -67,8 +70,9 @@ def from_template(template: dict) -> Email:
     if not smtp_config: raise SmtpConfigNotProvidedError()
     subject = template.get('subject')
     body = template.get('body')
+    body_type = template.get('body_type')
     attachments = template.get('attachments')
-    return Email(smtp_config, subject, body, attachments)
+    return Email(smtp_config, subject, body, body_type, attachments)
 
 
 

@@ -12,7 +12,8 @@ class TestEmail(unittest.TestCase):
     def setUp(self):
         self.recipients = ['recipient1@example.com', 'recipient2@example.com']
         self.subject = 'Test subject'
-        self.body = 'Test body'
+        self.body = '<p>Test body</p>'
+        self.body_type = 'html'
         self.attachments = [
             {
                 'filename': 'example.csv',
@@ -30,10 +31,11 @@ class TestEmail(unittest.TestCase):
 
 
     def test_constructor(self):
-        email = emails.Email(self.smtp_config, self.subject, self.body, self.attachments)
+        email = emails.Email(self.smtp_config, self.subject, self.body, self.body_type, self.attachments)
         self.assertEqual(email.smtp_config, self.smtp_config)
         self.assertEqual(email.subject, self.subject)
         self.assertEqual(email.body, self.body)
+        self.assertEqual(email.body_type, self.body_type)
         self.assertEqual(email.attachments, self.attachments)
 
 
@@ -54,12 +56,14 @@ class TestEmail(unittest.TestCase):
             'smtp_config': self.smtp_config,
             'subject': self.subject,
             'body': self.body,
+            'body_type': self.body_type,
             'attachments': self.attachments
         }
         email = emails.from_template(template)
         self.assertEqual(email.smtp_config, self.smtp_config)
         self.assertEqual(email.subject, self.subject)
         self.assertEqual(email.body, self.body)
+        self.assertEqual(email.body_type, self.body_type)
         self.assertEqual(email.attachments, self.attachments)
 
 
@@ -139,8 +143,8 @@ class TestEmailSend(unittest.TestCase):
     @patch('smtplib.SMTP')
     def test_sent_message_is_constructed_correctly(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
-        email = emails.Email(self.smtp_config, self.subject, self.body)
-        email.send(self.recipients)
+        e = emails.Email(self.smtp_config, self.subject, self.body)
+        e.send(self.recipients)
         sent_message = smtp_mock.send_message.call_args[0][0]
         self.assertEqual(sent_message['From'], self.smtp_config['sender'])
         self.assertEqual(sent_message['To'], ', '.join(self.recipients))
@@ -162,6 +166,17 @@ class TestEmailSend(unittest.TestCase):
         email.send(self.recipients)
         sent_message = smtp_mock.send_message.call_args[0][0]
         self.assertNotIn('Subject', sent_message.keys())
+
+
+    @patch('smtplib.SMTP')
+    def test_body_type_is_passed_to_set_content(self, smtp_mock):
+        self._prepare_smtp_mock(smtp_mock)
+        body = '<p>Test body</p>'
+        email = emails.Email(self.smtp_config, body=body, body_type='html')
+        email.send(self.recipients)
+        sent_message = smtp_mock.send_message.call_args[0][0]
+        self.assertEqual(sent_message.get_content().strip(), body)
+        self.assertIn('text/html', sent_message['Content-Type'])
 
 
     @patch('smtplib.SMTP')
