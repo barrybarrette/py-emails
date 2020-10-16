@@ -1,4 +1,5 @@
 import mimetypes
+import socket
 
 import unittest
 from unittest.mock import patch, call
@@ -51,6 +52,12 @@ class TestEmail(unittest.TestCase):
             email = emails.Email(self.smtp_config)
 
 
+    def test_raises_if_attachment_mimetype_cannot_be_guessed_and_was_not_specified(self):
+        attachment = {'filename': 'LICENSE', 'content': b'MIT License'}
+        with self.assertRaises(emails._src.MimeTypeNotSpecifiedError):
+            email = emails.Email(self.smtp_config, attachments=[attachment])
+
+
     def test_from_template(self):
         template = {
             'smtp_config': self.smtp_config,
@@ -78,6 +85,7 @@ class TestEmail(unittest.TestCase):
 
 
 
+@patch('smtplib.SMTP')
 class TestEmailSend(unittest.TestCase):
 
     def setUp(self):
@@ -102,7 +110,6 @@ class TestEmailSend(unittest.TestCase):
         }
 
 
-    @patch('smtplib.SMTP')
     def test_smtp_is_called_correctly(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         email = emails.Email(self.smtp_config)
@@ -114,7 +121,6 @@ class TestEmailSend(unittest.TestCase):
         smtp_mock.__exit__.assert_called_once()
 
 
-    @patch('smtplib.SMTP')
     def test_defaults_to_port_25_if_not_specified(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         self.smtp_config.pop('port')
@@ -123,7 +129,6 @@ class TestEmailSend(unittest.TestCase):
         smtp_mock.assert_called_once_with(self.smtp_config['host'], 25)
 
 
-    @patch('smtplib.SMTP')
     def test_smtp_authenticates_if_auth_specified_in_config(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         email = emails.Email(self.smtp_config)
@@ -131,7 +136,6 @@ class TestEmailSend(unittest.TestCase):
         smtp_mock.login.assert_called_once_with(self.smtp_config['sender'], self.smtp_config['password'])
 
 
-    @patch('smtplib.SMTP')
     def test_smtp_does_not_attempt_to_authenticate_if_password_not_specified_in_config(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         self.smtp_config.pop('password')
@@ -140,7 +144,6 @@ class TestEmailSend(unittest.TestCase):
         smtp_mock.login.assert_not_called()
 
 
-    @patch('smtplib.SMTP')
     def test_sent_message_is_constructed_correctly(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         e = emails.Email(self.smtp_config, self.subject, self.body)
@@ -152,14 +155,12 @@ class TestEmailSend(unittest.TestCase):
         self.assertEqual(sent_message.get_content().strip(), self.body)
 
 
-    @patch('smtplib.SMTP')
     def test_unspecified_body_does_not_raise_exception(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         email = emails.Email(self.smtp_config, self.subject)
         email.send(self.recipients)
 
 
-    @patch('smtplib.SMTP')
     def test_unspecified_subject_does_not_generate_header(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         email = emails.Email(self.smtp_config, body=self.body)
@@ -168,7 +169,6 @@ class TestEmailSend(unittest.TestCase):
         self.assertNotIn('Subject', sent_message.keys())
 
 
-    @patch('smtplib.SMTP')
     def test_body_type_is_passed_to_set_content(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         body = '<p>Test body</p>'
@@ -179,7 +179,6 @@ class TestEmailSend(unittest.TestCase):
         self.assertIn('text/html', sent_message['Content-Type'])
 
 
-    @patch('smtplib.SMTP')
     def test_can_use_recipient_as_string_instead_of_list(self, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         email = emails.Email(self.smtp_config)
@@ -188,16 +187,8 @@ class TestEmailSend(unittest.TestCase):
         self.assertEqual(sent_message['To'], 'person1@example.com')
 
 
-    def test_raises_if_attachment_mimetype_cannot_be_guessed_and_was_not_specified(self):
-        attachment = {'filename': 'LICENSE', 'content': b'MIT License'}
-        email = emails.Email(self.smtp_config, attachments=[attachment])
-        with self.assertRaises(emails._src.MimeTypeNotSpecifiedError):
-            email.send(self.recipients)
-
-
     @patch('email.message.EmailMessage.add_attachment')
-    @patch('smtplib.SMTP')
-    def test_attachments_are_added(self, smtp_mock, add_attachment_mock):
+    def test_attachments_are_added(self, add_attachment_mock, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         email = emails.Email(self.smtp_config, attachments=self.attachments)
         email.send(self.recipients)
@@ -212,8 +203,7 @@ class TestEmailSend(unittest.TestCase):
 
 
     @patch('email.message.EmailMessage.add_attachment')
-    @patch('smtplib.SMTP')
-    def test_attachment_mimetype_is_used_if_specified(self, smtp_mock, add_attachment_mock):
+    def test_attachment_mimetype_is_used_if_specified(self, add_attachment_mock, smtp_mock):
         self._prepare_smtp_mock(smtp_mock)
         attachment = {
             'filename': 'README',
@@ -223,6 +213,30 @@ class TestEmailSend(unittest.TestCase):
         email = emails.Email(self.smtp_config, attachments=[attachment])
         email.send(self.recipients)
         add_attachment_mock.assert_called_once_with(b'example readme', maintype='text', subtype='plain', filename='README')
+
+
+    def test_retries_on_timeout(self, smtp_mock):
+        self._prepare_smtp_mock(smtp_mock)
+        smtp_mock.send_message.side_effect = [socket.timeout, socket.timeout, None]
+        email = emails.Email(self.smtp_config)
+        email.send(self.recipients)
+        self.assertEqual(smtp_mock.send_message.call_count, 3)
+
+
+    def test_does_not_exceed_retry_attempt_threshold(self, smtp_mock):
+        self._prepare_smtp_mock(smtp_mock)
+        smtp_mock.send_message.side_effect = [socket.timeout, socket.timeout, socket.timeout]
+        email = emails.Email(self.smtp_config)
+        with self.assertRaises(socket.timeout):
+            email.send(self.recipients)
+
+
+    def test_can_specify_retry_threshold(self, smtp_mock):
+        self._prepare_smtp_mock(smtp_mock)
+        smtp_mock.send_message.side_effect = [socket.timeout, socket.timeout, socket.timeout, None]
+        email = emails.Email(self.smtp_config)
+        email.send(self.recipients, max_retries=3)
+        self.assertEqual(smtp_mock.send_message.call_count, 4)
 
 
     def _prepare_smtp_mock(self, smtp_mock):
