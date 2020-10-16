@@ -5,7 +5,7 @@ with open('README.md', 'r') as readme_file:
 
 setup(
     name='py-emails',
-    version='1.1.0',
+    version='1.2.0',
     author='Barry Barrette',
     author_email='barrybarrette@gmail.com',
     description='Simple wrapper around email and smtplib for composing and sending email messages in an intuitive, simple interface.',

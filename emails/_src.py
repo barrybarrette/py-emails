@@ -1,6 +1,10 @@
 import email.message
 import mimetypes
 import smtplib
+import socket
+
+
+_DEFAULT_RETRIES = 2
 
 
 class Email:
@@ -13,17 +17,16 @@ class Email:
         self.body = body
         self.body_type = body_type
         self.attachments = attachments or []
+        self._create_message()
 
 
-    def send(self, recipients):
-        message = self._create_message(recipients)
+    def send(self, recipients, max_retries=_DEFAULT_RETRIES):
+        self._set_recipients(recipients)
         host = self.smtp_config['host']
         port = self.smtp_config.get('port', 25)
         password = self.smtp_config.get('password')
-        with smtplib.SMTP(host, port) as smtp:
-            smtp.starttls()
-            if password: smtp.login(self.smtp_config['sender'], password)
-            smtp.send_message(message)
+        self._retry_attempts = 0
+        self._send_with_retries(host, password, port, max_retries)
 
 
     def _raise_if_undefined(self, attribute):
@@ -31,24 +34,24 @@ class Email:
             raise InvalidSmtpConfigError(attribute)
 
 
-    def _create_message(self, recipients):
-        message = email.message.EmailMessage()
-        message['From'] = self.smtp_config['sender']
-        if isinstance(recipients, str): message['To'] = recipients
-        else: message['To'] = ', '.join(recipients)
-        if self.subject: message['Subject'] = self.subject
+    def _create_message(self):
+        self._message = email.message.EmailMessage()
+        self._message['From'] = self.smtp_config['sender']
+        if self.subject: self._message['Subject'] = self.subject
         if self.body:
-            if self.body_type: message.set_content(self.body, subtype=self.body_type)
-            else: message.set_content(self.body)
-        self._add_attachments(message)
-        return message
+            if self.body_type:
+                self._message.set_content(self.body, subtype=self.body_type)
+            else:
+                self._message.set_content(self.body)
+        self._add_attachments()
+        return self._message
 
 
-    def _add_attachments(self, message):
+    def _add_attachments(self):
         for attachment in self.attachments:
             mime_type = self._get_mime_type(attachment)
             maintype, subtype = mime_type.split('/')
-            message.add_attachment(
+            self._message.add_attachment(
                 attachment['content'],
                 maintype=maintype,
                 subtype=subtype,
@@ -63,6 +66,31 @@ class Email:
         if not mime_type:
             raise MimeTypeNotSpecifiedError(attachment['filename'])
         return mime_type
+
+
+    def _set_recipients(self, recipients):
+        if isinstance(recipients, str):
+            self._message['To'] = recipients
+        else:
+            self._message['To'] = ', '.join(recipients)
+
+
+    def _send_with_retries(self, host, password, port, max_retries):
+        try:
+            self._send_message(host, password, port)
+        except socket.timeout as e:
+            if self._retry_attempts < max_retries:
+                self._retry_attempts += 1
+                self._send_with_retries(host, password, port, max_retries)
+            else: raise e
+
+
+    def _send_message(self, host, password, port):
+        with smtplib.SMTP(host, port) as smtp:
+            smtp.starttls()
+            if password: smtp.login(self.smtp_config['sender'], password)
+            smtp.send_message(self._message)
+
 
 
 def from_template(template: dict) -> Email:
