@@ -1,5 +1,5 @@
 # py-emails
-[![Build Status](https://travis-ci.org/barrybarrette/py-emails.svg?branch=master)](https://travis-ci.org/whitebarry/py-emails)
+[![Build Status](https://travis-ci.org/barrybarrette/py-emails.svg?branch=master)](https://travis-ci.org/barrybarrette/py-emails)
 [![Coverage Status](https://coveralls.io/repos/github/whitebarry/py-emails/badge.svg)](https://coveralls.io/github/whitebarry/py-emails)
 
 
