@@ -1,6 +1,6 @@
 # py-emails
-[![Build Status](https://travis-ci.org/barrybarrette/py-emails.svg?branch=master)](https://travis-ci.org/barrybarrette/py-emails)
-[![Coverage Status](https://coveralls.io/repos/github/whitebarry/py-emails/badge.svg)](https://coveralls.io/github/whitebarry/py-emails)
+[![Build Status](https://travis-ci.com/barrybarrette/py-emails.svg?branch=master)](https://app.travis-ci.com/github/barrybarrette/py-emails)
+[![Coverage Status](https://coveralls.io/repos/github/barrybarrette/py-emails/badge.svg?branch=master)](https://coveralls.io/github/barrybarrette/py-emails?branch=master)
 
 
 Simple wrapper around `email` and `smtplib` for composing and sending email messages in an intuitive, simple interface.
@@ -69,3 +69,7 @@ my_email.send(['person2@example.com', 'person3@example.com'])
 ```
 
 See `examples.py` for more in depth use cases
+
+
+# Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md)
