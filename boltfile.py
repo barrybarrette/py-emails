@@ -1,9 +1,9 @@
 import bolt
 
 bolt.register_task('clear-pyc', ['delete-pyc.src', 'delete-pyc.tests'])
-bolt.register_task('ut', ['clear-pyc', 'shell.pytest'])
-bolt.register_task('ct', ['clear-pyc', 'shell.pytest.continuous'])
-bolt.register_task('cov', ['clear-pyc', 'shell.pytest.with-coverage'])
+bolt.register_task('ut', ['clear-pyc', 'set-vars.unit-test', 'shell.pytest'])
+bolt.register_task('ct', ['clear-pyc', 'set-vars.unit-test', 'shell.pytest.continuous'])
+bolt.register_task('cov', ['clear-pyc', 'set-vars.unit-test', 'shell.pytest.with-coverage'])
 bolt.register_task('default', ['ct'])
 
 
@@ -17,6 +17,13 @@ config = {
             'sourcedir': './tests/unit',
             'recursive': True
         }
+    },
+    'set-vars': {
+        'unit-test': {
+            'vars': {
+                'PYTHONPATH': '.'
+            },
+        },
     },
     'shell': {
         'pytest': {
