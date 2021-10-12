@@ -1,9 +1,9 @@
 import bolt
 
 bolt.register_task('clear-pyc', ['delete-pyc.src', 'delete-pyc.tests'])
-bolt.register_task('ut', ['clear-pyc', 'nose'])
-bolt.register_task('ct', ['clear-pyc', 'conttest'])
-bolt.register_task('cov', ['clear-pyc', 'nose.with-coverage'])
+bolt.register_task('ut', ['clear-pyc', 'shell.pytest'])
+bolt.register_task('ct', ['clear-pyc', 'shell.pytest.continuous'])
+bolt.register_task('cov', ['clear-pyc', 'shell.pytest.with-coverage'])
 bolt.register_task('default', ['ct'])
 
 
@@ -18,19 +18,19 @@ config = {
             'recursive': True
         }
     },
-    'nose': {
-        'directory': './tests/unit',
-        'with-coverage': {
-            'options': {
-                'with-coverage': True,
-                'cover-erase': True,
-                'cover-package': 'emails',
-                'cover-html': True,
-                'cover-html-dir': 'output/coverage',
-            }
-        }
+    'shell': {
+        'pytest': {
+            'command': 'pytest',
+            'with-coverage': {
+                'arguments': [
+                    '--cov', 'emails',
+                    '--cov-report', 'term',
+                    '--cov-report', 'html:output/coverage'
+                ]
+            },
+            'continuous': {
+                'command': 'pytest-watch'
+            },
+        },
     },
-    'conttest': {
-        'task': 'nose'
-    }
 }

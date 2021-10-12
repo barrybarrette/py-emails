@@ -33,11 +33,7 @@ class TestEmail(unittest.TestCase):
 
     def test_constructor(self):
         email = emails.Email(self.smtp_config, self.subject, self.body, self.body_type, self.attachments)
-        self.assertEqual(email.smtp_config, self.smtp_config)
-        self.assertEqual(email.subject, self.subject)
-        self.assertEqual(email.body, self.body)
-        self.assertEqual(email.body_type, self.body_type)
-        self.assertEqual(email.attachments, self.attachments)
+        self.assert_email_is_built_correctly(email)
 
 
     def test_constructor_raises_if_sender_not_specified(self):
@@ -67,11 +63,7 @@ class TestEmail(unittest.TestCase):
             'attachments': self.attachments
         }
         email = emails.from_template(template)
-        self.assertEqual(email.smtp_config, self.smtp_config)
-        self.assertEqual(email.subject, self.subject)
-        self.assertEqual(email.body, self.body)
-        self.assertEqual(email.body_type, self.body_type)
-        self.assertEqual(email.attachments, self.attachments)
+        self.assert_email_is_built_correctly(email)
 
 
     def test_from_template_raises_if_smtp_config_not_specified(self):
@@ -83,6 +75,14 @@ class TestEmail(unittest.TestCase):
         with self.assertRaises(emails._src.SmtpConfigNotProvidedError):
             email = emails.from_template(template)
 
+
+    # Helpers
+    def assert_email_is_built_correctly(self, email: emails.Email):
+        self.assertEqual(email.smtp_config, self.smtp_config)
+        self.assertEqual(email.subject, self.subject)
+        self.assertEqual(email.body, self.body)
+        self.assertEqual(email.body_type, self.body_type)
+        self.assertEqual(email.attachments, self.attachments)
 
 
 @patch('smtplib.SMTP')
