@@ -20,13 +20,21 @@ class Email:
         self._create_message()
 
 
+    @classmethod
+    def from_template(cls, template: dict) -> 'Email':
+        smtp_config = template.get('smtp_config')
+        if not smtp_config: raise SmtpConfigNotProvidedError()
+        subject = template.get('subject')
+        body = template.get('body')
+        body_type = template.get('body_type')
+        attachments = template.get('attachments')
+        return cls(smtp_config, subject, body, body_type, attachments)
+
+
     def send(self, recipients, max_retries=_DEFAULT_RETRIES):
         self._set_recipients(recipients)
-        host = self.smtp_config['host']
-        port = self.smtp_config.get('port', 25)
-        password = self.smtp_config.get('password')
-        self._retry_attempts = 0
-        self._send_with_retries(host, password, port, max_retries)
+        self._current_retry = 0
+        self._send_with_retries(max_retries)
 
 
     def _raise_if_undefined(self, attribute):
@@ -75,32 +83,33 @@ class Email:
             self._message['To'] = ', '.join(recipients)
 
 
-    def _send_with_retries(self, host, password, port, max_retries):
+    def _send_with_retries(self, max_retries):
         try:
-            self._send_message(host, password, port)
+            self._send_message()
         except socket.timeout as e:
-            if self._retry_attempts < max_retries:
-                self._retry_attempts += 1
-                self._send_with_retries(host, password, port, max_retries)
-            else: raise e
+            if self._current_retry == max_retries: raise e
+            self._do_retry(max_retries)
 
 
-    def _send_message(self, host, password, port):
+    def _send_message(self):
+        host = self.smtp_config['host']
+        port = self.smtp_config.get('port', 25)
+        password = self.smtp_config.get('password')
         with smtplib.SMTP(host, port) as smtp:
             smtp.starttls()
             if password: smtp.login(self.smtp_config['sender'], password)
             smtp.send_message(self._message)
 
 
+    def _do_retry(self, max_retries):
+        self._current_retry += 1
+        self._send_with_retries(max_retries)
+
+
+
 
 def from_template(template: dict) -> Email:
-    smtp_config = template.get('smtp_config')
-    if not smtp_config: raise SmtpConfigNotProvidedError()
-    subject = template.get('subject')
-    body = template.get('body')
-    body_type = template.get('body_type')
-    attachments = template.get('attachments')
-    return Email(smtp_config, subject, body, body_type, attachments)
+    return Email.from_template(template)
 
 
 

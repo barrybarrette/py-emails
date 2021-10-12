@@ -5,12 +5,12 @@ with open('README.md', 'r') as readme_file:
 
 setup(
     name='py-emails',
-    version='1.2.0',
+    version='1.2.1',
     author='Barry Barrette',
     author_email='barrybarrette@gmail.com',
-    description='Simple wrapper around email and smtplib for composing and sending email messages in an intuitive, simple interface.',
+    description='Simple wrapper around email and smtplib standard libraries for composing and sending email messages in an intuitive, simple interface.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/whitebarry/py-emails',
+    url='https://github.com/barrybarrette/py-emails',
     packages=find_packages()
 )
