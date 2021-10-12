@@ -5,16 +5,13 @@ python:
   - "3.8"
   - "3.9"
   - "3.10"
-install: skip
-jobs:
-  include:
-    - stage: unittest
-      name: "Unit tests"
-      before_script:
-        - pip install -r requirements-dev.txt
-        - pip install coveralls
-      script: bolt cov
-      after_success: coveralls
+install:
+  - pip install -r requirements-dev.txt
+  - pip install coveralls
+script:
+  - bolt cov
+after_success:
+  - coveralls
 deploy:
   provider: pypi
   user: "__token__"
