@@ -35,3 +35,48 @@ if __name__ == '__main__':
         attachments=[attachment]
     )
     email.send('<your recipients>')
+
+    # HTML Body Type Example
+    ##########################################
+    html_body = """\
+        <html>
+          <head>
+            <style>
+                .button {
+                  border: none;
+                  color: white;
+                  padding: 15px 32px;
+                  text-align: center;
+                  text-decoration: none;
+                  display: inline-block;
+                  font-size: 16px;
+                  margin: 4px 2px;
+                  cursor: pointer;
+                  background-color: #4CAF50;
+                }
+            </style>
+          </head>
+          <body>
+            <h1>Sample Heading</h1>
+            <p>Sample Paragraph</p>
+            <b>Bold Message</b><br>
+            <a href="https://www.python.org/"><input class="button" type=button value='Go to Python Website'></a>
+          </body>
+        </html>
+    """
+    email = emails.Email(smtp_config,
+                         subject='HTML in body example',
+                         body=html_body,
+                         body_type="html")
+    email.send('<your recipients>')  # recipients can be a string or a string-yielding iterable
+
+    # HTML Body Type Example with Template
+    ##########################################
+    template = {
+        'smtp_config': smtp_config,
+        'subject': "HTML in body example",
+        'body': html_body,
+        'body_type': "html"
+    }
+    email = emails.from_template(template)
+    email.send('<your recipients>')  # recipients can be a string or a string-yielding iterable
