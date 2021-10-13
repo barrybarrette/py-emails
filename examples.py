@@ -38,13 +38,6 @@ if __name__ == '__main__':
 
     # HTML Body Type Example
     ##########################################
-    sender = '<your email address>'
-    smtp_config = {
-        'sender': sender,
-        'host': 'smtp.example.com',
-        'port': 587, # defaults to 25 if not specified
-        'password': input(f'Password for {sender}: ') # Omit password if not needed
-    }
     html_body = """\
         <html>
           <head>
@@ -67,7 +60,7 @@ if __name__ == '__main__':
             <h1>Sample Heading</h1>
             <p>Sample Paragraph</p>
             <b>Bold Message</b><br>
-            <a href="https://www.python.org/"/><input class="button" type=button value='Go to Python Website'></a>
+            <a href="https://www.python.org/"><input class="button" type=button value='Go to Python Website'></a>
           </body>
         </html>
     """
@@ -79,39 +72,6 @@ if __name__ == '__main__':
 
     # HTML Body Type Example with Template
     ##########################################
-    sender = '<your email address>'
-    smtp_config = {
-        'sender': sender,
-        'host': 'smtp.example.com',
-        'port': 587,  # defaults to 25 if not specified
-        'password': input(f'Password for {sender}: ')  # Omit password if not needed
-    }
-    html_body = """\
-            <html>
-              <head>
-                <style>
-                    .button {
-                      border: none;
-                      color: white;
-                      padding: 15px 32px;
-                      text-align: center;
-                      text-decoration: none;
-                      display: inline-block;
-                      font-size: 16px;
-                      margin: 4px 2px;
-                      cursor: pointer;
-                      background-color: #4CAF50;
-                    }
-                </style>
-              </head>
-              <body>
-                <h1>Sample Heading</h1>
-                <p>Sample Paragraph</p>
-                <b>Bold Message</b><br>
-                <a href="https://www.python.org/"/><input class="button" type=button value='Go to Python Website'></a>
-              </body>
-            </html>
-        """
     template = {
         'smtp_config': smtp_config,
         'subject': "HTML in body example",
